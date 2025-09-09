@@ -12,18 +12,70 @@ export default function Home() {
   const [isDragOver, setIsDragOver] = useState(false)
   const router = useRouter()
 
-  const handleFileSelect = (file: File) => {
-    if (file.type === "application/pdf") {
-      // Mock file upload - in real app, this would POST to /upload endpoint
-      const mockFileId = `file_${Date.now()}`
-      console.log("[v0] Uploading file:", file.name, "-> fileId:", mockFileId)
+  // const handleFileSelect = (file: File) => {
+  //   if (file.type === "application/pdf") {
+  //     // Mock file upload - in real app, this would POST to /upload endpoint
+  //     const mockFileId = `file_${Date.now()}`
+  //     console.log("[v0] Uploading file:", file.name, "-> fileId:", mockFileId)
+
+  //     // Navigate to review page with the new file
+  //     router.push(`/review/${mockFileId}`)
+  //   } else {
+  //     alert("Please select a PDF file")
+  //   }
+  // }
+
+    // const handleFileSelect = async (file: File) => {
+    // if (file.type === "application/pdf") {
+    //   // Mock file upload - in real app, this would POST to /upload endpoint
+
+    //   const formData= new FormData();
+    //   formData.append("file",file)
+
+    //   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`,{
+    //     method: "POST",
+    //     body: formData,
+    //   })
+    //   const mockFileId = `file_${Date.now()}`
+    //   console.log("[v0] Uploading file:", file.name, "-> fileId:", mockFileId)
+
+    //   // Navigate to review page with the new file
+    //   router.push(`/review/${mockFileId}`)
+    // } else {
+    //   alert("Please select a PDF file")
+    // }
+  
+  const handleFileSelect = async (file: File) => {
+  if (file.type === "application/pdf") {
+    const formData = new FormData();
+    // The key 'file' here should match what your backend expects (req.file)
+    formData.append("file", file);
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await res.json();
+      console.log("Upload success:", data);
+
+      console.log("[v0] Uploading file:", file.name, "-> fileId:", data.fileId)
 
       // Navigate to review page with the new file
-      router.push(`/review/${mockFileId}`)
-    } else {
-      alert("Please select a PDF file")
+      router.push(`/review/${data.fileId}`)
+    } catch (err) {
+      console.error(err);
     }
+  } else {
+    console.warn("Only PDFs are allowed");
   }
+};
+
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
