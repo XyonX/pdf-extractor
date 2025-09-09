@@ -25,9 +25,9 @@ export function PDFViewer({ file, currentPage, zoom, onLoadSuccess }: PDFViewerP
           pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`
         }
         setWorkerReady(true)
-        console.log("[v0] PDF worker configured successfully")
-      } catch (error) {
-        console.error("[v0] Worker setup failed:", error)
+        console.log("[pdf-viewer] PDF worker configured")
+      } catch (err) {
+        console.error("[pdf-viewer] Worker setup failed, using fallback:", err)
         pdfjs.GlobalWorkerOptions.workerSrc =
           "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.mjs"
         setWorkerReady(true)
@@ -37,22 +37,25 @@ export function PDFViewer({ file, currentPage, zoom, onLoadSuccess }: PDFViewerP
     setupWorker()
   }, [])
 
+  useEffect(() => {
+    // Reset state when file changes
+    setNumPages(0)
+    setLoading(!!file)
+    setError(null)
+  }, [file])
+
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    console.log("[v0] PDF loaded successfully with", numPages, "pages")
+    console.log("[pdf-viewer] Loaded:", numPages, "pages")
     setNumPages(numPages)
     setLoading(false)
     setError(null)
     onLoadSuccess(numPages)
   }
 
-  const onDocumentLoadError = (error: Error) => {
-    console.error("[v0] PDF load error:", error)
-    if (error.message.includes("Invalid PDF structure")) {
-      setError("Demo mode: Upload a real PDF file to view")
-    } else {
-      setError("Failed to load PDF: " + error.message)
-    }
-    setLoading(false)
+  const onDocumentLoadError = (err: Error) => {
+    console.error("[pdf-viewer] Load error:", err)
+    setError("Failed to load PDF: " + err.message)
+     setLoading(false)
   }
 
   if (!workerReady) {
@@ -66,7 +69,7 @@ export function PDFViewer({ file, currentPage, zoom, onLoadSuccess }: PDFViewerP
   if (!file) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground">
-        <p>No PDF selected</p>
+        <p>No PDF source</p>
       </div>
     )
   }
@@ -85,11 +88,6 @@ export function PDFViewer({ file, currentPage, zoom, onLoadSuccess }: PDFViewerP
           </svg>
           <p className="text-sm">{error}</p>
         </div>
-        <div className="text-muted-foreground text-xs max-w-sm">
-          <p>
-            This is a demo with mock data. To test the PDF viewer, upload a real PDF file using the file input above.
-          </p>
-        </div>
       </div>
     )
   }
@@ -107,13 +105,15 @@ export function PDFViewer({ file, currentPage, zoom, onLoadSuccess }: PDFViewerP
             </div>
           }
         >
-          <Page
-            pageNumber={currentPage}
-            scale={zoom / 100}
-            renderTextLayer={true}
-            renderAnnotationLayer={true}
-            className="shadow-lg"
-          />
+          {numPages > 0 && currentPage <= numPages && (
+            <Page
+              pageNumber={currentPage}
+              scale={zoom / 100}
+              renderTextLayer={true}
+              renderAnnotationLayer={true}
+              className="shadow-lg"
+            />
+          )}
         </Document>
       </div>
     </div>
