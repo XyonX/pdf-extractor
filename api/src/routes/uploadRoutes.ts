@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { upload } from "../middleware/uploadPdf.js";
+import { upload } from "../middleware/upload.ts";
 import { uploadPdf } from "../controllers/uploadController.ts";
 
 
